@@ -1,39 +1,92 @@
 import SwiftUI
+import AVFoundation
+import Combine
+
 
 struct DiscoverView: View {
-    @State private var searchText = ""
-    @State private var suggestions = ["Songs for when you're ghosted 👻", "Rainy day lo-fi 🌧", "Hindi heartbreak", "Shreya Ghoshal feels", "Revenge songs", "Tamil sad songs"]
+    @State private var query = ""
+    @State private var results: [Track] = []
+    @State private var isLoading = false
+    @State private var selectedTrack: Track?
 
     var body: some View {
         NavigationView {
-            VStack {
-                TextField("Search by vibe, mood, artist...", text: $searchText)
-                    .padding()
-                    .background(Color.white.opacity(0.1))
-                    .cornerRadius(10)
-                    .foregroundColor(.white)
-                    .padding()
+            VStack(spacing: 16) {
+                TextField("Search for a song", text: $query)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
 
-                List {
-                    ForEach(filteredSuggestions, id: \.self) { suggestion in
-                        Text(suggestion)
-                            .foregroundColor(.white)
-                            .padding(.vertical, 6)
+                Button("Search") {
+                    search()
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.green)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .padding(.horizontal)
+
+                if isLoading {
+                    ProgressView("Searching...")
+                        .padding()
+                }
+
+                List(results) { track in
+                    HStack {
+                        AsyncImage(url: URL(string: track.coverURL)) { image in
+                            image.resizable()
+                        } placeholder: {
+                            ProgressView()
+                        }
+                        .frame(width: 60, height: 60)
+                        .cornerRadius(8)
+
+                        VStack(alignment: .leading) {
+                            Text(track.title).bold()
+                            Text(track.artist).font(.caption).foregroundColor(.gray)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "play.circle.fill")
+                            .foregroundColor(.blue)
+                            .font(.title2)
+                    }
+                    .padding(.vertical, 6)
+                    .onTapGesture {
+                        selectedTrack = track
                     }
                 }
                 .listStyle(.plain)
-                .background(Color.black)
+
+                // Navigate to NowPlayingView with full controls
+                if let selectedTrack = selectedTrack,
+                   let selectedIndex = results.firstIndex(where: { $0.id == selectedTrack.id }) {
+                    NavigationLink(
+                        destination: NowPlayingView(tracks: results, currentIndex: selectedIndex),
+                        isActive: Binding(
+                            get: { self.selectedTrack != nil },
+                            set: { if !$0 { self.selectedTrack = nil } }
+                        ),
+                        label: { EmptyView() }
+                    )
+                    .hidden()
+                }
             }
-            .navigationTitle("🔍 Discover")
-            .background(Color.black)
+            .navigationTitle("MoodTunes")
         }
     }
 
-    var filteredSuggestions: [String] {
-        if searchText.isEmpty {
-            return suggestions
-        } else {
-            return suggestions.filter { $0.lowercased().contains(searchText.lowercased()) }
+    func search() {
+        isLoading = true
+        results = []
+        selectedTrack = nil
+
+        SpotifyService.shared.searchTracks(query: query) { tracks in
+            DispatchQueue.main.async {
+                self.results = tracks
+                self.isLoading = false
+            }
         }
     }
 }
