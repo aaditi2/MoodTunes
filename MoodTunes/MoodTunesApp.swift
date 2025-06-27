@@ -18,20 +18,21 @@ struct MoodTunesApp: App {
                         Label("Sara", systemImage: "bubble.left.and.bubble.right.fill")
                     }
 
-                MoodMapView()
+                DiscoverView()
                     .tabItem {
-                        Label("MoodMap", systemImage: "calendar")
+                        Label("Discover", systemImage: "magnifyingglass")
                     }
 
                 LibraryView()
                     .tabItem {
                         Label("Library", systemImage: "music.note.list")
                     }
-
-                DiscoverView()
+                
+                MoodMapView()
                     .tabItem {
-                        Label("Discover", systemImage: "magnifyingglass")
+                        Label("MoodMap", systemImage: "calendar")
                     }
+
             }
             .environmentObject(moodVM)
         }
