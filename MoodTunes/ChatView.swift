@@ -1,82 +1,106 @@
 import SwiftUI
 
+struct Message: Identifiable {
+    let id = UUID()
+    let text: String
+    let isUser: Bool
+}
+
 struct ChatView: View {
-    @EnvironmentObject var moodVM: MoodViewModel
-    @State private var userInput = ""
-    @State private var chatHistory: [String] = [
-        "Sara: Hey love 💕 What’s going on in your heart today?"
-    ]
+    @State private var messages: [Message] = []
+    @State private var inputText: String = ""
+    @State private var suggestedTracks: [Track] = []
+    @State private var isLoading = false
+    @State private var selectedTrack: Track?
+
+    @State private var selectedLanguages: Set<String> = ["Hindi"]
+    let allLanguages = ["Hindi", "English", "Punjabi", "Tamil", "Telugu", "Marathi", "Malayalam"]
 
     var body: some View {
-        ZStack {
-            moodVM.currentMood.gradient
-                .ignoresSafeArea()
-                .animation(.easeInOut(duration: 1.0), value: moodVM.currentMood)
-
+        NavigationView {
             VStack {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        ForEach(chatHistory, id: \.self) { message in
-                            Text(message)
-                                .padding()
-                                .background(Color.white.opacity(0.15))
-                                .cornerRadius(12)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity, alignment: message.hasPrefix("Sara") ? .leading : .trailing)
+                    LazyVStack(alignment: .leading, spacing: 12) {
+                        ForEach(messages) { message in
+                            MessageBubbleView(message: message)
+                        }
+
+                        ForEach(suggestedTracks) { track in
+                            SongCard(
+                                track: track,
+                                reason: "Suggested because it matches your vibe",
+                                onTap: {
+                                    selectedTrack = track
+                                }
+                            )
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.top, 16)
+                    .padding()
                 }
 
-                Divider().background(Color.white.opacity(0.2))
+                LanguagePicker(allLanguages: allLanguages, selectedLanguages: $selectedLanguages)
+                    .padding(.horizontal)
 
                 HStack {
-                    TextField("Tell Sara how you're feeling…", text: $userInput)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
+                    TextField("Tell Sara what you're feeling...", text: $inputText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .disabled(isLoading)
 
-                    Button(action: sendMessage) {
-                        Image(systemName: "paperplane.fill")
-                            .foregroundColor(.white)
-                            .padding()
+                    Button("Send") {
+                        send()
                     }
+                    .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
                 }
                 .padding()
+            }
+            .navigationTitle("Chat with Sara 💚")
+            .background(navigationLinkToNowPlaying)
+        }
+    }
+
+    var navigationLinkToNowPlaying: some View {
+        NavigationLink(
+            destination: NowPlayingView(tracks: suggestedTracks, currentIndex: suggestedTracks.firstIndex(where: { $0.id == selectedTrack?.id }) ?? 0),
+            isActive: Binding(get: { selectedTrack != nil }, set: { if !$0 { selectedTrack = nil } })
+        ) {
+            EmptyView()
+        }
+        .hidden()
+    }
+
+    func send() {
+        let prompt = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !prompt.isEmpty else { return }
+
+        messages.append(Message(text: prompt, isUser: true))
+        inputText = ""
+        isLoading = true
+        suggestedTracks = []
+
+        TogetherService.shared.askSara(userInput: prompt, languageTags: Array(selectedLanguages)) { reply, keywords in
+            DispatchQueue.main.async {
+                let trimmedReply = reply.components(separatedBy: ". ").prefix(2).joined(separator: ". ") + "."
+                messages.append(Message(text: trimmedReply, isUser: false))
+                fetchSongs(from: keywords)
+                isLoading = false
             }
         }
     }
 
-    func sendMessage() {
-        guard !userInput.isEmpty else { return }
+    func fetchSongs(from keywords: [String]) {
+        guard !keywords.isEmpty else { return }
+        let query = keywords.joined(separator: " ") + " " + selectedLanguages.joined(separator: " ")
 
-        chatHistory.append("You: \(userInput)")
-
-        let lowercaseInput = userInput.lowercased()
-
-        // Sara's response logic
-        if lowercaseInput.contains("heartbreak") || lowercaseInput.contains("ex") || lowercaseInput.contains("left me") {
-            chatHistory.append("Sara: Heartbreak hurts, I know 💔 Here's a glow-up playlist just for you.")
-            moodVM.updateMoodBasedOnEmotionTag("heartbreak")
-        } else if lowercaseInput.contains("happy") || lowercaseInput.contains("glow up") || lowercaseInput.contains("confident") {
-            chatHistory.append("Sara: Yaaas 💅 You're glowing! Let's vibe with some main character music.")
-            moodVM.updateMoodBasedOnEmotionTag("glowup")
-        } else if lowercaseInput.contains("angry") || lowercaseInput.contains("frustrated") {
-            chatHistory.append("Sara: Rage mode activated 😤 Here's your 'burn it all down' playlist 🔥")
-            moodVM.updateMoodBasedOnEmotionTag("rage")
-        } else if lowercaseInput.contains("calm") || lowercaseInput.contains("peaceful") {
-            chatHistory.append("Sara: Soft and lo-fi vibes coming your way 🌙")
-            moodVM.updateMoodBasedOnEmotionTag("chill")
-        } else if lowercaseInput.contains("lost") || lowercaseInput.contains("empty") {
-            chatHistory.append("Sara: You’re not alone 🫂 Let's sit with this feeling — I’ll play something soft.")
-            moodVM.updateMoodBasedOnEmotionTag("sad")
-        } else {
-            chatHistory.append("Sara: Got it, love. Here's something to match your vibe 💜")
-            moodVM.updateMoodBasedOnEmotionTag("chill")
+        SpotifyService.shared.searchTracks(query: query) { tracks in
+            DispatchQueue.main.async {
+                let filtered = tracks.filter { track in
+                    selectedLanguages.contains { lang in
+                        track.title.localizedCaseInsensitiveContains(lang) ||
+                        track.artist.localizedCaseInsensitiveContains(lang)
+                    }
+                }
+                self.suggestedTracks = filtered.isEmpty ? tracks : filtered
+            }
         }
-
-        userInput = ""
     }
 }

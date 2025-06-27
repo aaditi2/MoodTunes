@@ -1,15 +1,5 @@
 import Foundation
 
-// MARK: - Track model
-struct Track: Identifiable {
-    let id: String
-    let title: String
-    let artist: String
-    let coverURL: String
-}
-
-
-// MARK: - SpotifyService
 class SpotifyService {
     static let shared = SpotifyService()
 
@@ -17,7 +7,6 @@ class SpotifyService {
         "X-RapidAPI-Key": Secrets.rapidAPIkey,
         "X-RapidAPI-Host": "spotify23.p.rapidapi.com"
     ]
-
 
     func searchTracks(query: String, completion: @escaping ([Track]) -> Void) {
         guard let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
