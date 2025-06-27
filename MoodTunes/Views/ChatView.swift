@@ -9,7 +9,7 @@ struct Message: Identifiable {
 struct ChatView: View {
     @State private var messages: [Message] = []
     @State private var inputText: String = ""
-    @State private var suggestedTracks: [Track] = []
+    @State private var suggestedTracks: [SuggestedTrack] = []
     @State private var isLoading = false
     @State private var selectedTrack: Track?
     @State private var vibe: String = ""
@@ -28,15 +28,12 @@ struct ChatView: View {
                             MessageBubbleView(message: message)
                         }
 
-                        ForEach(suggestedTracks) { track in
-                            let reason = [vibe.isEmpty ? nil : vibe.capitalized + " vibe",
-                                          songLanguage.isEmpty ? nil : songLanguage,
-                                          scene.isEmpty ? nil : scene].compactMap { $0 }.joined(separator: " · ")
+                        ForEach(suggestedTracks) { suggestion in
                             SongCard(
-                                track: track,
-                                reason: reason.isEmpty ? "Suggested for you" : reason,
+                                track: suggestion.track,
+                                reason: suggestion.reason,
                                 onTap: {
-                                    selectedTrack = track
+                                    selectedTrack = suggestion.track
                                 }
                             )
                         }
@@ -66,7 +63,10 @@ struct ChatView: View {
 
     var navigationLinkToNowPlaying: some View {
         NavigationLink(
-            destination: NowPlayingView(tracks: suggestedTracks, currentIndex: suggestedTracks.firstIndex(where: { $0.id == selectedTrack?.id }) ?? 0),
+            destination: NowPlayingView(
+                tracks: suggestedTracks.map { $0.track },
+                currentIndex: suggestedTracks.firstIndex(where: { $0.track.id == selectedTrack?.id }) ?? 0
+            ),
             isActive: Binding(get: { selectedTrack != nil }, set: { if !$0 { selectedTrack = nil } })
         ) {
             EmptyView()
@@ -102,19 +102,29 @@ struct ChatView: View {
         if !songLanguage.isEmpty {
             languagesForQuery.insert(songLanguage)
         }
-        let query = keywords.joined(separator: " ") + " " + languagesForQuery.joined(separator: " ")
 
-        SpotifyService.shared.searchTracks(query: query) { tracks in
-            DispatchQueue.main.async {
-                let allLangs = languagesForQuery
-                let filtered = tracks.filter { track in
-                    allLangs.contains { lang in
-                        track.title.localizedCaseInsensitiveContains(lang) ||
-                        track.artist.localizedCaseInsensitiveContains(lang)
-                    }
+        let group = DispatchGroup()
+        var results: [SuggestedTrack] = []
+
+        for keyword in keywords {
+            group.enter()
+            let query = keyword + " " + languagesForQuery.joined(separator: " ")
+            SpotifyService.shared.searchTracks(query: query) { tracks in
+                if let track = tracks.first {
+                    let reasonParts = [
+                        vibe.isEmpty ? nil : vibe.capitalized + " vibe",
+                        songLanguage.isEmpty ? nil : songLanguage,
+                        "\"" + keyword + "\" related"
+                    ].compactMap { $0 }
+                    let reason = reasonParts.joined(separator: " · ")
+                    results.append(SuggestedTrack(track: track, reason: reason))
                 }
-                self.suggestedTracks = filtered.isEmpty ? tracks : filtered
+                group.leave()
             }
+        }
+
+        group.notify(queue: .main) {
+            self.suggestedTracks = results
         }
     }
 }
