@@ -15,6 +15,7 @@ struct ChatView: View {
     @State private var vibe: String = ""
     @State private var scene: String = ""
     @State private var songLanguage: String = ""
+    @State private var situation: String = ""
 
     @State private var selectedLanguages: Set<String> = ["Hindi"]
     let allLanguages = ["Hindi", "English", "Punjabi", "Tamil", "Telugu", "Marathi", "Malayalam"]
@@ -79,6 +80,7 @@ struct ChatView: View {
         guard !prompt.isEmpty else { return }
 
         messages.append(Message(text: prompt, isUser: true))
+        situation = prompt
         inputText = ""
         isLoading = true
         suggestedTracks = []
@@ -90,13 +92,13 @@ struct ChatView: View {
                 vibe = response.vibe
                 scene = response.scene
                 songLanguage = response.language.isEmpty ? selectedLanguages.first ?? "" : response.language
-                fetchSongs(from: response.keywords)
+                fetchSongs(from: response.keywords, situation: situation)
                 isLoading = false
             }
         }
     }
 
-    func fetchSongs(from keywords: [String]) {
+    func fetchSongs(from keywords: [String], situation: String) {
         guard !keywords.isEmpty else { return }
         var languagesForQuery = selectedLanguages
         if !songLanguage.isEmpty {
@@ -108,7 +110,12 @@ struct ChatView: View {
 
         for keyword in keywords {
             group.enter()
-            let query = keyword + " " + languagesForQuery.joined(separator: " ")
+            var queryParts: [String] = [keyword]
+            if !situation.isEmpty {
+                queryParts.append(situation)
+            }
+            queryParts.append(languagesForQuery.joined(separator: " "))
+            let query = queryParts.joined(separator: " ")
             SpotifyService.shared.searchTracks(query: query) { tracks in
                 if let track = tracks.first {
                     let reasonParts = [
