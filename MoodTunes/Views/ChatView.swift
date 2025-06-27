@@ -12,9 +12,6 @@ struct ChatView: View {
     @State private var suggestedTracks: [SuggestedTrack] = []
     @State private var isLoading = false
     @State private var selectedTrack: Track?
-    @State private var vibe: String = ""
-    @State private var scene: String = ""
-    @State private var songLanguage: String = ""
     @State private var situation: String = ""
 
     @State private var selectedLanguages: Set<String> = ["Hindi"]
@@ -89,49 +86,20 @@ struct ChatView: View {
             DispatchQueue.main.async {
                 let trimmedReply = response.reply.components(separatedBy: ". ").prefix(2).joined(separator: ". ")
                 messages.append(Message(text: trimmedReply, isUser: false))
-                vibe = response.vibe
-                scene = response.scene
-                songLanguage = response.language.isEmpty ? selectedLanguages.first ?? "" : response.language
-                fetchSongs(from: response.keywords, situation: situation)
+                fetchSongs(for: situation)
                 isLoading = false
             }
         }
     }
 
-    func fetchSongs(from keywords: [String], situation: String) {
-        guard !keywords.isEmpty else { return }
-        var languagesForQuery = selectedLanguages
-        if !songLanguage.isEmpty {
-            languagesForQuery.insert(songLanguage)
-        }
-
-        let group = DispatchGroup()
-        var results: [SuggestedTrack] = []
-
-        for keyword in keywords {
-            group.enter()
-            var queryParts: [String] = [keyword]
-            if !situation.isEmpty {
-                queryParts.append(situation)
+    func fetchSongs(for situation: String) {
+        let query = ([situation] + Array(selectedLanguages)).joined(separator: " ")
+        SpotifyService.shared.searchTracks(query: query) { tracks in
+            let reasons = "Songs in " + selectedLanguages.joined(separator: ", ")
+            let suggestions = tracks.prefix(10).map { SuggestedTrack(track: $0, reason: reasons) }
+            DispatchQueue.main.async {
+                self.suggestedTracks = suggestions
             }
-            queryParts.append(languagesForQuery.joined(separator: " "))
-            let query = queryParts.joined(separator: " ")
-            SpotifyService.shared.searchTracks(query: query) { tracks in
-                if let track = tracks.first {
-                    let reasonParts = [
-                        vibe.isEmpty ? nil : vibe.capitalized + " vibe",
-                        songLanguage.isEmpty ? nil : songLanguage,
-                        "\"" + keyword + "\" related"
-                    ].compactMap { $0 }
-                    let reason = reasonParts.joined(separator: " · ")
-                    results.append(SuggestedTrack(track: track, reason: reason))
-                }
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            self.suggestedTracks = results
         }
     }
 }
