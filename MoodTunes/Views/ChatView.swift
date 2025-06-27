@@ -12,6 +12,9 @@ struct ChatView: View {
     @State private var suggestedTracks: [Track] = []
     @State private var isLoading = false
     @State private var selectedTrack: Track?
+    @State private var vibe: String = ""
+    @State private var scene: String = ""
+    @State private var songLanguage: String = ""
 
     @State private var selectedLanguages: Set<String> = ["Hindi"]
     let allLanguages = ["Hindi", "English", "Punjabi", "Tamil", "Telugu", "Marathi", "Malayalam"]
@@ -26,9 +29,12 @@ struct ChatView: View {
                         }
 
                         ForEach(suggestedTracks) { track in
+                            let reason = [vibe.isEmpty ? nil : vibe.capitalized + " vibe",
+                                          songLanguage.isEmpty ? nil : songLanguage,
+                                          scene.isEmpty ? nil : scene].compactMap { $0 }.joined(separator: " · ")
                             SongCard(
                                 track: track,
-                                reason: "Suggested because it matches your vibe",
+                                reason: reason.isEmpty ? "Suggested for you" : reason,
                                 onTap: {
                                     selectedTrack = track
                                 }
@@ -77,11 +83,14 @@ struct ChatView: View {
         isLoading = true
         suggestedTracks = []
 
-        TogetherService.shared.askSara(userInput: prompt, languageTags: Array(selectedLanguages)) { reply, keywords in
+        TogetherService.shared.askSara(userInput: prompt, languageTags: Array(selectedLanguages)) { response in
             DispatchQueue.main.async {
-                let trimmedReply = reply.components(separatedBy: ". ").prefix(2).joined(separator: ". ") + "."
+                let trimmedReply = response.reply.components(separatedBy: ". ").prefix(2).joined(separator: ". ")
                 messages.append(Message(text: trimmedReply, isUser: false))
-                fetchSongs(from: keywords)
+                vibe = response.vibe
+                scene = response.scene
+                songLanguage = response.language.isEmpty ? selectedLanguages.first ?? "" : response.language
+                fetchSongs(from: response.keywords)
                 isLoading = false
             }
         }
@@ -89,12 +98,17 @@ struct ChatView: View {
 
     func fetchSongs(from keywords: [String]) {
         guard !keywords.isEmpty else { return }
-        let query = keywords.joined(separator: " ") + " " + selectedLanguages.joined(separator: " ")
+        var languagesForQuery = selectedLanguages
+        if !songLanguage.isEmpty {
+            languagesForQuery.insert(songLanguage)
+        }
+        let query = keywords.joined(separator: " ") + " " + languagesForQuery.joined(separator: " ")
 
         SpotifyService.shared.searchTracks(query: query) { tracks in
             DispatchQueue.main.async {
+                let allLangs = languagesForQuery
                 let filtered = tracks.filter { track in
-                    selectedLanguages.contains { lang in
+                    allLangs.contains { lang in
                         track.title.localizedCaseInsensitiveContains(lang) ||
                         track.artist.localizedCaseInsensitiveContains(lang)
                     }
