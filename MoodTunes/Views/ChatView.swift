@@ -120,7 +120,7 @@ struct ChatView: View {
 
     func fetchSongs(for situation: String) {
         let query = ([situation] + Array(selectedLanguages)).joined(separator: " ")
-        SpotifyService.shared.searchTracks(query: query) { tracks in
+        SoundCloudService.shared.searchTracks(query: query) { tracks in
             let reasons = "Songs in " + selectedLanguages.joined(separator: ", ")
             let suggestions = tracks.prefix(10).map { SuggestedTrack(track: $0, reason: reasons) }
             DispatchQueue.main.async {

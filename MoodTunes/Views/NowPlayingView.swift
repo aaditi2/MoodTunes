@@ -136,7 +136,7 @@ struct NowPlayingView: View {
     func play(_ track: Track) {
         player?.pause() // ✅ Stop previous playback
 
-        SpotifyService.shared.fetchPreviewURL(for: track.id) { url in
+        SoundCloudService.shared.fetchStreamURL(for: track.id) { url in
             if let url = url, let audioURL = URL(string: url) {
                 DispatchQueue.main.async {
                     player = AVPlayer(url: audioURL)

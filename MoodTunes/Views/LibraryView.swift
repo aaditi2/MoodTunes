@@ -137,7 +137,7 @@ struct PlaylistDetailView: View {
 
         for query in playlist.queries {
             group.enter()
-            SpotifyService.shared.searchTracks(query: query) { result in
+            SoundCloudService.shared.searchTracks(query: query) { result in
                 allFetched.append(contentsOf: result)
                 group.leave()
             }
