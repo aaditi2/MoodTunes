@@ -190,13 +190,13 @@ struct HomeView: View {
                 }
             }
             .onAppear {
-                SoundCloudService.shared.fetchPopularArtists { artists in
+                YouTubeMusicService.shared.fetchPopularArtists { artists in
                     self.popularArtists = artists
                 }
-                SoundCloudService.shared.fetchBollywoodAlbums { albums in
+                YouTubeMusicService.shared.fetchBollywoodAlbums { albums in
                     self.bollywoodAlbums = albums
                 }
-                SoundCloudService.shared.searchTracks(query: "Taylor Swift") { tracks in
+                YouTubeMusicService.shared.searchTracks(query: "Taylor Swift") { tracks in
                     self.taylorTracks = tracks
                 }
             }
