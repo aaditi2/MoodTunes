@@ -20,10 +20,12 @@ struct SelectedTrack: Identifiable {
 
 struct LibraryView: View {
     @EnvironmentObject var libraryVM: LibraryViewModel
+    @State private var selection = Set<UUID>()
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
         NavigationStack {
-            List {
+            List(selection: $selection) {
                 ForEach(libraryVM.playlists.indices, id: \.self) { index in
                     HStack {
                         NavigationLink(destination: PlaylistDetailView(playlist: $libraryVM.playlists[index])) {
@@ -44,18 +46,33 @@ struct LibraryView: View {
 
                         Spacer()
 
-                        Button(role: .destructive) {
-                            libraryVM.playlists.remove(at: index)
-                        } label: {
-                            Image(systemName: "trash.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.red)
+                        if !editMode.isEditing {
+                            Button(role: .destructive) {
+                                libraryVM.playlists.remove(at: index)
+                            } label: {
+                                Image(systemName: "trash.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
+                    .tag(libraryVM.playlists[index].id)
                 }
             }
             .navigationTitle("🎧 Your Library")
+            .environment(\.editMode, $editMode)
+            .toolbar {
+                EditButton()
+                if !selection.isEmpty {
+                    Button(role: .destructive) {
+                        libraryVM.deletePlaylists(ids: selection)
+                        selection.removeAll()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
         }
     }
 }
@@ -64,9 +81,11 @@ struct PlaylistDetailView: View {
     @Binding var playlist: Playlist
     @State private var tracks: [Track] = []
     @State private var selectedTrack: SelectedTrack?
+    @State private var selection = Set<String>()
+    @State private var editMode: EditMode = .inactive
 
     var body: some View {
-        List {
+        List(selection: $selection) {
             Section {
                 TextField("Playlist Name", text: $playlist.title)
                     .font(.headline)
@@ -79,14 +98,26 @@ struct PlaylistDetailView: View {
                     onTap: {
                         selectedTrack = SelectedTrack(index: index)
                     },
-                    onDelete: {
+                    onDelete: editMode.isEditing ? nil : {
                         tracks.remove(at: index)
                         playlist.tracks = tracks
                     }
                 )
+                .tag(tracks[index].id)
             }
         }
         .navigationTitle("\(playlist.emoji) \(playlist.title)")
+        .environment(\.editMode, $editMode)
+        .toolbar {
+            EditButton()
+            if !selection.isEmpty {
+                Button(role: .destructive) {
+                    deleteSelectedTracks()
+                } label: {
+                    Image(systemName: "trash")
+                }
+            }
+        }
         .onAppear {
             fetchAllTracks()
         }
@@ -116,5 +147,11 @@ struct PlaylistDetailView: View {
             self.tracks = allFetched
             playlist.tracks = allFetched
         }
+    }
+
+    func deleteSelectedTracks() {
+        tracks.removeAll { selection.contains($0.id) }
+        playlist.tracks = tracks
+        selection.removeAll()
     }
 }
