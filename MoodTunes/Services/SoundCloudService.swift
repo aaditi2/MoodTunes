@@ -47,4 +47,54 @@ class SoundCloudService {
             }
         }.resume()
     }
+
+    func fetchStreamURL(for id: String, completion: @escaping (String?) -> Void) {
+        guard let url = URL(string: "https://soundcloud4.p.rapidapi.com/song/stream?id=\(id)") else {
+            completion(nil)
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.allHTTPHeaderFields = headers
+
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let stream = json["url"] as? String {
+                    completion(stream)
+                } else {
+                    completion(nil)
+                }
+            } catch {
+                completion(nil)
+            }
+        }.resume()
+    }
+
+    func fetchPopularArtists(completion: @escaping ([Artist]) -> Void) {
+        searchTracks(query: "popular") { tracks in
+            var seen = Set<String>()
+            let artists: [Artist] = tracks.compactMap { track in
+                guard !seen.contains(track.artist) else { return nil }
+                seen.insert(track.artist)
+                return Artist(id: track.artist, name: track.artist, imageUrl: track.coverURL)
+            }
+            completion(artists)
+        }
+    }
+
+    func fetchBollywoodAlbums(completion: @escaping ([Album]) -> Void) {
+        searchTracks(query: "bollywood") { tracks in
+            let albums: [Album] = tracks.map { track in
+                Album(id: track.id, name: track.title, coverUrl: track.coverURL, artist: track.artist)
+            }
+            completion(albums)
+        }
+    }
 }
