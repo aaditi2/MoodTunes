@@ -21,4 +21,8 @@ class LibraryViewModel: ObservableObject {
         let new = Playlist(title: title, emoji: "🎵", queries: [], tracks: tracks)
         playlists.append(new)
     }
+
+    func deletePlaylists(ids: Set<UUID>) {
+        playlists.removeAll { ids.contains($0.id) }
+    }
 }
