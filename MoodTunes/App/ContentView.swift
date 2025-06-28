@@ -27,7 +27,7 @@ struct ContentView: View {
                     Text("Library")
                 }
 
-            DiscoverView()
+           DiscoverView()
                 .tabItem {
                     Image(systemName: "magnifyingglass")
                     Text("Discover")
@@ -38,10 +38,12 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environmentObject(MoodViewModel())
+        .environmentObject(LibraryViewModel())
 }
 
 #Preview {
     DiscoverView()
         .environmentObject(MoodViewModel())
+        .environmentObject(LibraryViewModel())
 }
 
