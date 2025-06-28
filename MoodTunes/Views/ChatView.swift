@@ -30,12 +30,16 @@ struct ChatView: View {
                             MessageBubbleView(message: message)
                         }
 
-                        ForEach(suggestedTracks) { suggestion in
+                        ForEach(suggestedTracks.indices, id: \.self) { index in
+                            let suggestion = suggestedTracks[index]
                             SongCard(
                                 track: suggestion.track,
                                 reason: suggestion.reason,
                                 onTap: {
                                     selectedTrack = suggestion.track
+                                },
+                                onDelete: {
+                                    suggestedTracks.remove(at: index)
                                 }
                             )
                         }
