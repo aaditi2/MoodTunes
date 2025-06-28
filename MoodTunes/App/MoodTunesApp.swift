@@ -4,6 +4,7 @@ import Combine
 @main
 struct MoodTunesApp: App {
     @StateObject var moodVM = MoodViewModel()
+    @StateObject var libraryVM = LibraryViewModel()
 
     var body: some Scene {
         WindowGroup {
@@ -35,6 +36,7 @@ struct MoodTunesApp: App {
 
             }
             .environmentObject(moodVM)
+            .environmentObject(libraryVM)
         }
     }
 }

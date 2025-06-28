@@ -14,6 +14,10 @@ struct ChatView: View {
     @State private var selectedTrack: Track?
     @State private var situation: String = ""
 
+    @EnvironmentObject var libraryVM: LibraryViewModel
+    @StateObject private var speechRecognizer = SpeechRecognizer()
+    @State private var isRecording = false
+
     @State private var selectedLanguages: Set<String> = ["Hindi"]
     let allLanguages = ["Hindi", "English", "Punjabi", "Tamil", "Telugu", "Marathi", "Malayalam"]
 
@@ -47,15 +51,32 @@ struct ChatView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .disabled(isLoading)
 
+                    Button(action: toggleRecording) {
+                        Image(systemName: isRecording ? "stop.fill" : "mic.fill")
+                    }
+                    .padding(.trailing, 4)
+
                     Button("Send") {
                         send()
                     }
                     .disabled(inputText.trimmingCharacters(in: .whitespaces).isEmpty || isLoading)
                 }
                 .padding()
+                
+                if !suggestedTracks.isEmpty {
+                    Button("Save Playlist") {
+                        savePlaylist()
+                    }
+                    .padding(.bottom)
+                }
             }
             .navigationTitle("Chat with Sara 💚")
             .background(navigationLinkToNowPlaying)
+            .onChange(of: speechRecognizer.transcript) { newValue in
+                if isRecording {
+                    inputText = newValue
+                }
+            }
         }
     }
 
@@ -73,6 +94,7 @@ struct ChatView: View {
     }
 
     func send() {
+        if isRecording { toggleRecording() }
         let prompt = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else { return }
 
@@ -101,5 +123,27 @@ struct ChatView: View {
                 self.suggestedTracks = suggestions
             }
         }
+    }
+
+    func toggleRecording() {
+        if isRecording {
+            speechRecognizer.stopRecording()
+            inputText = speechRecognizer.transcript
+        } else {
+            try? speechRecognizer.startRecording()
+        }
+        isRecording.toggle()
+    }
+
+    func savePlaylist() {
+        let title = generatePlaylistTitle(from: situation)
+        let tracks = suggestedTracks.map { $0.track }
+        libraryVM.addPlaylist(title: title, tracks: tracks)
+    }
+
+    func generatePlaylistTitle(from situation: String) -> String {
+        let trimmed = situation.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Sara's Mix" }
+        return "\(trimmed.prefix(20)) Vibes"
     }
 }
