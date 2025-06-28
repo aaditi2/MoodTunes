@@ -40,6 +40,13 @@ struct LibraryView: View {
                         }
                         .padding(.vertical, 6)
                     }
+                    .swipeActions {
+                        Button(role: .destructive) {
+                            libraryVM.playlists.remove(at: index)
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    }
                 }
             }
             .navigationTitle("🎧 Your Library")
