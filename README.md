@@ -12,8 +12,7 @@ MoodTunes/
 ├── ViewModels/     # Observable view models
 ├── Models/         # Data models
 ├── Services/       # Networking and API helpers
-├── Resources/      # Assets and entitlements
-└── Config/         # Local configuration such as API keys
+└── Resources/      # Assets and entitlements
 ```
 
 
