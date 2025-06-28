@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Sara needs access to understand your speech</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sara needs your mic to listen to you</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app uses your music to build personalized playlists</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs your location to suggest mood-based tracks</string>
+</dict>
+</plist>
