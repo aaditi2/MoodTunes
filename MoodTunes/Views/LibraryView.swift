@@ -25,27 +25,33 @@ struct LibraryView: View {
         NavigationStack {
             List {
                 ForEach(libraryVM.playlists.indices, id: \.self) { index in
-                    NavigationLink(destination: PlaylistDetailView(playlist: $libraryVM.playlists[index])) {
-                        HStack {
-                            Text(libraryVM.playlists[index].emoji)
-                                .font(.largeTitle)
-                            VStack(alignment: .leading) {
-                                Text(libraryVM.playlists[index].title)
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                Text("Tap to explore")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
+                    HStack {
+                        NavigationLink(destination: PlaylistDetailView(playlist: $libraryVM.playlists[index])) {
+                            HStack {
+                                Text(libraryVM.playlists[index].emoji)
+                                    .font(.largeTitle)
+                                VStack(alignment: .leading) {
+                                    Text(libraryVM.playlists[index].title)
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                    Text("Tap to explore")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
                             }
+                            .padding(.vertical, 6)
                         }
-                        .padding(.vertical, 6)
-                    }
-                    .swipeActions {
+
+                        Spacer()
+
                         Button(role: .destructive) {
                             libraryVM.playlists.remove(at: index)
                         } label: {
-                            Label("Delete", systemImage: "trash")
+                            Image(systemName: "trash.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.red)
                         }
+                        .buttonStyle(.plain)
                     }
                 }
             }
@@ -67,13 +73,17 @@ struct PlaylistDetailView: View {
             }
 
             ForEach(tracks.indices, id: \.self) { index in
-                SongCard(track: tracks[index], reason: "From \(playlist.title)") {
-                    selectedTrack = SelectedTrack(index: index)
-                }
-            }
-            .onDelete { offsets in
-                tracks.remove(atOffsets: offsets)
-                playlist.tracks = tracks
+                SongCard(
+                    track: tracks[index],
+                    reason: "From \(playlist.title)",
+                    onTap: {
+                        selectedTrack = SelectedTrack(index: index)
+                    },
+                    onDelete: {
+                        tracks.remove(at: index)
+                        playlist.tracks = tracks
+                    }
+                )
             }
         }
         .navigationTitle("\(playlist.emoji) \(playlist.title)")
