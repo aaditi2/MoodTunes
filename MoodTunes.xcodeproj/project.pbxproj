@@ -10,9 +10,22 @@
 		5E9BB5BD2E0CD7E600AC626C /* MoodTunes.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoodTunes.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		5E94E1F12E0F6C20005F4F48 /* Exceptions for "MoodTunes" folder in "MoodTunes" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 5E9BB5BC2E0CD7E600AC626C /* MoodTunes */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5E9BB5BF2E0CD7E600AC626C /* MoodTunes */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				5E94E1F12E0F6C20005F4F48 /* Exceptions for "MoodTunes" folder in "MoodTunes" target */,
+			);
 			path = MoodTunes;
 			sourceTree = "<group>";
 		};
@@ -244,7 +257,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MoodTunes/MoodTunes.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 48GX8RA533;
@@ -282,7 +295,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = MoodTunes/MoodTunes.entitlements;
+				CODE_SIGN_ENTITLEMENTS = "";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 48GX8RA533;
