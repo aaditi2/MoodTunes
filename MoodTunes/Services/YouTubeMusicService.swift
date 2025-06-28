@@ -3,10 +3,36 @@ import Foundation
 class YouTubeMusicService {
     static let shared = YouTubeMusicService()
 
+    private let baseURL = "https://youtube-music-api-yt.p.rapidapi.com"
+
     private let headers = [
         "X-RapidAPI-Key": Secrets.rapidAPIkey,
         "X-RapidAPI-Host": "youtube-music-api-yt.p.rapidapi.com"
     ]
+
+    private func fetchJSON(endpoint: String,
+                           queryItems: [URLQueryItem] = [],
+                           completion: @escaping ([String: Any]?) -> Void) {
+        guard var components = URLComponents(string: baseURL + endpoint) else {
+            completion(nil)
+            return
+        }
+        if !queryItems.isEmpty { components.queryItems = queryItems }
+        guard let url = components.url else { completion(nil); return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.allHTTPHeaderFields = headers
+
+        URLSession.shared.dataTask(with: request) { data, _, _ in
+            guard let data = data else {
+                completion(nil)
+                return
+            }
+            let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            completion(json)
+        }.resume()
+    }
 
     func searchTracks(query: String, completion: @escaping ([Track]) -> Void) {
         guard let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
@@ -122,5 +148,63 @@ class YouTubeMusicService {
             }
             completion(albums)
         }
+    }
+
+    // MARK: - Additional Endpoints
+
+    func popularSearch(query: String, language: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "query", value: query),
+                     URLQueryItem(name: "language", value: language)]
+        fetchJSON(endpoint: "/popular/search", queryItems: items, completion: completion)
+    }
+
+    func popularCategories(language: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "language", value: language)]
+        fetchJSON(endpoint: "/popular/categories", queryItems: items, completion: completion)
+    }
+
+    func popularTrends(country: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "country", value: country)]
+        fetchJSON(endpoint: "/popular/trends", queryItems: items, completion: completion)
+    }
+
+    func getArtistAlbums(channelId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "channel_id", value: channelId)]
+        fetchJSON(endpoint: "/get_artist_albums", queryItems: items, completion: completion)
+    }
+
+    func getArtist(channelId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "channel_id", value: channelId)]
+        fetchJSON(endpoint: "/get_artist", queryItems: items, completion: completion)
+    }
+
+    func getUser(userId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "user_id", value: userId)]
+        fetchJSON(endpoint: "/get_user", queryItems: items, completion: completion)
+    }
+
+    func getUserPlaylists(userId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "user_id", value: userId)]
+        fetchJSON(endpoint: "/get_user_playlists", queryItems: items, completion: completion)
+    }
+
+    func getSong(videoId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "video_id", value: videoId)]
+        fetchJSON(endpoint: "/get_song", queryItems: items, completion: completion)
+    }
+
+    func getSongRelated(browseId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "browse_id", value: browseId)]
+        fetchJSON(endpoint: "/get_song_related", queryItems: items, completion: completion)
+    }
+
+    func getLyrics(browseId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "browse_id", value: browseId)]
+        fetchJSON(endpoint: "/get_lyrics", queryItems: items, completion: completion)
+    }
+
+    func getAlbum(browseId: String, completion: @escaping ([String: Any]?) -> Void) {
+        let items = [URLQueryItem(name: "browse_id", value: browseId)]
+        fetchJSON(endpoint: "/get_album", queryItems: items, completion: completion)
     }
 }
