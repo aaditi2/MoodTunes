@@ -82,7 +82,7 @@ struct DiscoverView: View {
         results = []
         selectedTrack = nil
 
-        SpotifyService.shared.searchTracks(query: query) { tracks in
+        SoundCloudService.shared.searchTracks(query: query) { tracks in
             DispatchQueue.main.async {
                 self.results = tracks
                 self.isLoading = false
