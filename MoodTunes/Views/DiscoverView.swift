@@ -8,6 +8,7 @@ struct DiscoverView: View {
     @State private var results: [Track] = []
     @State private var isLoading = false
     @State private var selectedTrack: Track?
+    @EnvironmentObject var shortcutHandler: ShortcutHandler
 
     var body: some View {
         NavigationView {
@@ -74,6 +75,11 @@ struct DiscoverView: View {
                 }
             }
             .navigationTitle("MoodTunes")
+            .onReceive(shortcutHandler.$searchQuery.compactMap { $0 }) { text in
+                query = text
+                search()
+                shortcutHandler.searchQuery = nil
+            }
         }
     }
 

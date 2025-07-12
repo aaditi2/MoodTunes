@@ -15,6 +15,7 @@ struct ChatView: View {
     @State private var situation: String = ""
 
     @EnvironmentObject var libraryVM: LibraryViewModel
+    @EnvironmentObject var shortcutHandler: ShortcutHandler
     @StateObject private var speechRecognizer = SpeechRecognizer()
     @State private var isRecording = false
 
@@ -80,6 +81,11 @@ struct ChatView: View {
                 if isRecording {
                     inputText = newValue
                 }
+            }
+            .onReceive(shortcutHandler.$chatMessage.compactMap { $0 }) { message in
+                inputText = message
+                send()
+                shortcutHandler.chatMessage = nil
             }
         }
     }

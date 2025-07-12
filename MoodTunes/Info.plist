@@ -8,7 +8,16 @@
 	<string>Sara needs your mic to listen to you</string>
 	<key>NSAppleMusicUsageDescription</key>
 	<string>This app uses your music to build personalized playlists</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs your location to suggest mood-based tracks</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>This app needs your location to suggest mood-based tracks</string>
+        <key>CFBundleURLTypes</key>
+        <array>
+                <dict>
+                        <key>CFBundleURLSchemes</key>
+                        <array>
+                                <string>moodtunes</string>
+                        </array>
+                </dict>
+        </array>
 </dict>
 </plist>
