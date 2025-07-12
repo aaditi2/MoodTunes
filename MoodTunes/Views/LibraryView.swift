@@ -20,8 +20,11 @@ struct SelectedTrack: Identifiable {
 
 struct LibraryView: View {
     @EnvironmentObject var libraryVM: LibraryViewModel
+    @EnvironmentObject var shortcutHandler: ShortcutHandler
     @State private var selection = Set<UUID>()
     @State private var editMode: EditMode = .inactive
+    @State private var autoPlay: Bool = false
+    @State private var autoTracks: [Track] = []
 
     var body: some View {
         NavigationStack {
@@ -72,6 +75,18 @@ struct LibraryView: View {
                         Image(systemName: "trash")
                     }
                 }
+            }
+            .onReceive(shortcutHandler.$playRequested) { value in
+                guard value else { return }
+                if let playlist = libraryVM.playlists.first,
+                   !playlist.tracks.isEmpty {
+                    autoTracks = playlist.tracks
+                    autoPlay = true
+                }
+                shortcutHandler.playRequested = false
+            }
+            .sheet(isPresented: $autoPlay) {
+                NowPlayingView(tracks: autoTracks, currentIndex: 0)
             }
         }
     }
