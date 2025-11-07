@@ -70,5 +70,3 @@ No more typing "sad songs Hindi" — Sara gets you.
 
 
 
-All source files remain under the `MoodTunes` group so the Xcode project
-continues to work without additional changes.
