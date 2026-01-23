@@ -70,3 +70,21 @@ No more typing "sad songs Hindi" — Sara gets you.
 
 
 
+
+---
+
+## ⌚️ watchOS Migration Starter (Glanceable Edition)
+
+This repo now includes a minimal watchOS-only starter view under `MoodTunesWatch/` that demonstrates a **single-purpose, glanceable flow**. The watch target is expected to:
+
+- Collapse multi-screen flows into one quick action screen.
+- Prefer a **single mood selection** + **one action** (e.g., play suggestion).
+- Defer heavier network work to iPhone when possible.
+- Avoid frequent timers and background updates.
+
+**Files added for watchOS scaffolding:**
+
+- `MoodTunesWatch/MoodTunesWatchApp.swift` (watchOS-only App entry)
+- `MoodTunesWatch/WatchHomeView.swift` (glanceable mood + play action)
+
+> Note: You still need to add a watchOS target in Xcode and assign these files to that target.
